@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style type="text/css">
+        html, body {
+            margin: 0;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body onload="draw();">
+</body>
+<script src="../../js/lib/three.min.js"></script>
+<script src="../../js/lib/OrbitControls.js"></script>
+<script src="../../js/lib/stats.min.js"></script>
+<script src="../../js/lib/dat.gui.min.js"></script>
+<script src="../../js/lib/Detector.js"></script>
+
+<script>
+    var renderer, camera, scene, gui, light, stats, controls, cube1, cube2;
+
+    function initRender() {
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0xeeeeee);
+        renderer.shadowMap.enabled = true;
+        //告诉渲染器需要阴影效果
+        document.body.appendChild(renderer.domElement);
+    }
+
+    function initCamera() {
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
+        camera.position.set(0, 5, 15 );
+    }
+
+    function initScene() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color( 0xa0a0a0 );
+        scene.fog = new THREE.Fog( 0xa0a0a0, 5, 50 );
+    }
+
+    //初始化dat.GUI简化试验流程
+    function initGui() {
+        //声明一个保存需求修改的相关数据的对象
+        gui = {
+            bump:0.03,
+            animation:false
+        };
+        var datGui = new dat.GUI();
+        //将设置属性添加到gui当中，gui.add(对象，属性，最小值，最大值）
+        datGui.add(gui, "bump", -1, 1).onChange(function (e) {
+            cube1.material.bumpScale = e;
+        });
+
+        datGui.add(gui, "animation");
+    }
+
+    function initLight() {
+        scene.add(new THREE.AmbientLight(0x444444));
+
+        light = new THREE.DirectionalLight(0xffffff);
+        light.position.set(0, 20, 10 );
+
+        light.castShadow = true;
+        light.shadow.camera.top = 10;
+        light.shadow.camera.bottom = -10;
+        light.shadow.camera.left = -10;
+        light.shadow.camera.right = 10;
+
+        //告诉平行光需要开启阴影投射
+        light.castShadow = true;
+
+        scene.add(light);
+    }
+
+    function initModel() {
+
+        //辅助工具
+        var helper = new THREE.AxesHelper(50);
+        scene.add(helper);
+
+        // 地板
+        var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 200, 200 ), new THREE.MeshPhongMaterial( { color: 0xffffff, depthWrite: false } ) );
+        mesh.rotation.x = - Math.PI / 2;
+        mesh.receiveShadow = true;
+        scene.add( mesh );
+
+        //添加地板割线
+        var grid = new THREE.GridHelper( 200, 50, 0x000000, 0x000000 );
+        grid.material.opacity = 0.2;
+        grid.material.transparent = true;
+        scene.add( grid );
+
+        //添加两个对比模型，一个添加凹凸贴图纹理
+
+        var bump = new THREE.TextureLoader().load("../../img/brick_bump.jpg");
+
+        var normal = new THREE.TextureLoader().load("../../img/brick_diffuse.jpg");
+
+        var material1 = new THREE.MeshPhongMaterial({
+            map:normal
+        });
+        //bumpMap用来创建一个凹凸贴图的纹理。黑色和白色的值映射到和光照相关的能感知到的深度。凹凸图并不会影响物体的几何形状，只影响光照。如果定义了一个法线贴图，则该属性被忽略。
+        material1.bumpMap = bump;
+        //bumpScale 凹凸贴图对材料有多大影响。典型的范围是0-1。默认为1。
+        material1.bumpScale = 0.03;
+
+        var geometry = new THREE.CubeGeometry(8, 8, 4);
+
+        cube1 = new THREE.Mesh(geometry, material1);
+        cube1.position.set(-5, 5, 0);
+        scene.add(cube1);
+
+        //创建不带凹凸纹理的图形
+        var material2 = new THREE.MeshPhongMaterial({
+            map:normal
+        });
+
+        cube2 = new THREE.Mesh(geometry, material2);
+        cube2.position.set(5, 5, 0);
+        scene.add(cube2);
+    }
+
+    //初始化性能插件
+    function initStats() {
+        stats = new Stats();
+        document.body.appendChild(stats.dom);
+    }
+
+    function initControls() {
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        //设置控制器的中心点
+        controls.target.set( 0, 5, 0 );
+        // 如果使用animate方法时，将此函数删除
+        //controls.addEventListener( 'change', render );
+        // 使动画循环使用时阻尼或自转 意思是否有惯性
+        controls.enableDamping = true;
+        //动态阻尼系数 就是鼠标拖拽旋转灵敏度
+        //controls.dampingFactor = 0.25;
+        //是否可以缩放
+        controls.enableZoom = true;
+        //是否自动旋转
+        controls.autoRotate = false;
+        controls.autoRotateSpeed = 0.5;
+        //设置相机距离原点的最远距离
+        controls.minDistance = 1;
+        //设置相机距离原点的最远距离
+        controls.maxDistance = 2000;
+        //是否开启右键拖拽
+        controls.enablePan = true;
+    }
+
+    function render() {
+
+        if(gui.animation){
+            cube1.rotation.y += 0.01;
+            cube2.rotation.y -= 0.01;
+        }
+
+        controls.update();
+    }
+
+    //窗口变动触发的函数
+    function onWindowResize() {
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+    }
+
+    function animate() {
+        //更新控制器
+        render();
+
+        //更新性能插件
+        stats.update();
+
+        renderer.render(scene, camera);
+
+        requestAnimationFrame(animate);
+    }
+
+    function draw() {
+        //兼容性判断
+        if (!Detector.webgl) Detector.addGetWebGLMessage();
+
+        initGui();
+        initRender();
+        initScene();
+        initCamera();
+        initLight();
+        initModel();
+        initControls();
+        initStats();
+
+        animate();
+        window.onresize = onWindowResize;
+    }
+
+
+</script>
+</html>

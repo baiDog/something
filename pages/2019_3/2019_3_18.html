@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>快速排序</title>
+	</head>
+	<body>
+		
+	</body>
+	<script>
+		var attrs = [12,54,1,3,87,43,21,43,12,65,44];
+		var nums = 0 ;
+		var quickSort = function(arr) {
+			nums++;
+			//判断循环结束 
+			if(arr.length<=1){
+				return arr;
+			}
+			var left =[],right=[];
+			//第一步，把arr切分2个，然后选个基准的数
+			var baseIndex = Math.floor(arr.length/2);
+			var baseNum = arr.splice(baseIndex,1)[0];
+			
+			var lens = arr.length;
+			for(var i=0;i<lens;i++){
+				if(arr[i]>baseNum){
+					right.push(arr[i]);
+				}else{
+					left.push(arr[i]);
+				}								
+			}
+			return quickSort(left).concat([baseNum],quickSort(right));
+		};
+		
+		var res = quickSort(attrs);
+		console.log(res,nums);
+	</script>
+</html>

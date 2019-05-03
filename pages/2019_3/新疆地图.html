@@ -1,0 +1,359 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta name="viewport" content="width=device-width initial-scale=1.0 maximum-scale=1.0 user-scalable=0">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>新疆地图</title>
+<style>
+body,html{ margin:0;padding:0;font:12px/16px Verdana,Helvetica,Arial,sans-serif;width: 100%;height: 100%}
+.container{
+  height: 100%
+}
+.amap-logo {
+    right: 0 !important;
+    left: auto !important;
+    display: none!important;
+}
+
+.amap-copyright {
+    right: 70px !important;
+    left: auto !important;
+    display: none!important;
+}  
+</style>
+<script language="javascript" src="https://webapi.amap.com/maps?v=1.4.12&key=a8e537d857c62c38ca0d3e4de7016125&&plugin=Map3D,AMap.DistrictLayer,AMap.Scale,AMap.ToolBar,AMap.DistrictSearch"></script>
+</head>
+<body >
+<div id="container" style="width:100%; height:100%;resize:both;"></div>
+<script language="javascript">
+var SOC = 'CHN';
+var map;
+var GDPSpeed = {
+    '650000':7.0,//新疆
+}
+var nationFill = '#2664c9'; //选中颜色
+var colorBase = 'rgba(27,53,99,1)';  //未选中颜色
+
+//市与区域关联(2维数组)
+var linkAreas=[
+	['巴音郭楞蒙古自治州','铁门关市'],
+	['昌吉回族自治州','五家渠市'],
+	['博尔塔拉蒙古自治州','双河市'],
+	['阿克苏地区','阿拉尔市'],
+	['喀什地区','图木舒克市'],
+	['和田地区','昆玉市'],
+	['阿勒泰地区','北屯市'],
+	['塔城地区','石河子市'],
+	['伊犁哈萨克自治州','可克达拉市']
+];
+
+var positions = [];
+
+var positionTops = ['克孜勒苏柯尔克孜自治州','昌吉回族自治州'];
+
+
+//地图定义
+var disCountry = new AMap.DistrictLayer.Country({
+    zIndex:10,
+    SOC:'CHN',
+    depth:2,   
+    styles:{
+        'nation-stroke':'rgba(89,200,255,0.3)',
+        'coastline-stroke':[0.85, 0.63, 0.94, 1],
+        'province-stroke':'white',
+        'city-stroke': 'rgba(89,200,255,0.3)',//中国特有字段
+        'fill':function(props){//中国特有字段
+           return colorBase;
+        }
+    }
+})
+
+
+//添加掩膜
+var opts = {
+    subdistrict: 0,
+    extensions: 'all',
+    level: 'city'
+};
+
+
+var district = new AMap.DistrictSearch(opts);
+district.search('新疆维吾尔自治区', function(status, result) {
+    var bounds = result.districtList[0].boundaries;
+    var mask = []
+    for(var i =0;i<bounds.length;i+=1){
+        mask.push([bounds[i]])
+    }
+    
+    map = new AMap.Map("container",{
+    	mask:mask,
+    	disableSocket:true,
+    	mapStyle: "amap://styles/dark",
+	    zooms: [6, 6],
+	    showIndoorMap:false,
+	    zoom: 6,
+	    isHotspot:false,
+	    defaultCursor:'pointer',
+	    touchZoomCenter:1,
+	    showLabel: false,
+	    dragEnable: false,
+	    pitch: 0,
+	    layers:[
+	        disCountry,
+	        new AMap.TileLayer.Satellite()
+	    ],
+	    viewMode:'3D',
+	    center:[84.6826171875,42.5472002344],
+	    resizeEnable: false
+	})
+    //地图放大比例
+	map.addControl(new AMap.Scale());
+	//地图放大工具
+//	map.addControl(new AMap.ToolBar({liteStyle:true}));
+
+	//地图点击（获取对应数据，然后做点切换）
+	 map.on('click', function (ev) {
+        var px = ev.pixel;
+        // 拾取所在位置的行政区
+        var props = disCountry.getDistrictByContainerPos(px);
+				console.log(props)
+        if (props) {
+            var NAME_CHN = props.NAME_CHN;
+            var NAME_CHN2 = [];
+            linkAreas.map(function(v,i){
+            	var indexs = v.indexOf(NAME_CHN);
+            	if(indexs!==-1){
+            		NAME_CHN2 = v;
+            	}
+            });
+            // 重置行政区样式
+            disCountry.setStyles({
+                'nation-stroke':'rgba(89,200,255,0.3)',//国境线颜色
+                'city-stroke': 'rgba(89,200,255,0.3)',//城市边线颜色
+                // 海岸线
+                'fill': function (props) {
+                		var colors = colorBase;
+                		//区内存在市存在
+                		if(NAME_CHN2.length>0){  
+                			if(NAME_CHN2.indexOf(props.NAME_CHN)!==-1){
+	                			colors = nationFill;
+	                		} 
+                		}else{
+	                		if(props.NAME_CHN == NAME_CHN){
+	                			colors = nationFill;
+	                		} 	
+                		}
+                		               		
+                		//把市关联到区域里面（原地图上市能单独区域获取）
+                		
+                    return colors;
+                }
+            });
+        }
+   });
+   getData();
+  
+   
+//  var layer = new AMap.TileLayer.Flexible({
+//      cacheSize: 1000,
+//      zIndex: 200,
+//      createTile: function (x, y, z, success, fail) {
+//          var c = document.createElement('canvas');
+//          c.width = c.height = 128;
+//
+//          var cxt = c.getContext("2d");
+//          cxt.font = "15px Verdana";
+//          cxt.fillStyle = "#45597b";
+//          cxt.strokeStyle = "#45597b";
+//          cxt.strokeRect(0, 0, 128, 128);
+//          // 通知API切片创建完成
+//          success(c);
+//      }
+//  });
+//
+//  layer.setMap(map);
+   
+});
+
+//获取城市位置
+function getData(){
+    AMap.plugin('AMap.DistrictSearch', function() {
+		var search = new AMap.DistrictSearch();
+		search.search('新疆维吾尔自治区', function(status, data) {
+			var iscityIn = false,
+					namePos = 'bottom';
+			if (status === 'complete') {
+//				console.log(data)
+				var citys = data['districtList'][0]['districtList'];
+				var lens = citys.length;
+				for (var i = 0; i < lens; i += 1) {
+					//剔除被包含的城市 (剔除某些小城市)
+					iscityIn = false;
+					linkAreas.map(function(v,index){
+						if(Number(v.indexOf(citys[i].name))>0){
+							iscityIn = true;
+						}
+					});
+					if(iscityIn){
+						continue;
+					}
+					//某些地区的标注位置
+					if(positionTops.indexOf(citys[i].name)!==-1){
+						namePos = "top";
+					}else{
+						namePos = "bottom";
+					}
+					
+			    positions.push({
+			        center: citys[i].center,
+			        name:citys[i].name,
+			        namePos:namePos,
+			        radius:8
+			    })
+				}
+				addLayer(positions);
+			}
+		});
+  });
+}
+
+var rs = 1,timer;
+
+function addLayer(positions){
+	    AMap.plugin('AMap.CustomLayer', function() {
+	        var canvas = document.createElement('canvas');
+	        var customLayer = new AMap.CustomLayer(canvas, {
+                zooms: [6, 6],
+                alwaysRender:true,//缩放过程中是否重绘，复杂绘制建议设为false
+				zIndex: 120
+			});
+			var onRender = function(){
+				if(timer){
+					clearInterval(timer);
+				}				
+			    var retina = AMap.Browser.retina;
+	        var size = map.getSize();//resize
+	        var width = size.width;
+	        var height = size.height;
+	        canvas.style.width = width+'px'
+	        canvas.style.height = height+'px'
+	        if(retina){//高清适配
+	            width*=2;
+	            height*=2;
+	        }
+	        canvas.width = width;
+	        canvas.height = height;//清除画布
+			    var ctx = canvas.getContext("2d");
+			    
+			    
+			    var drawCircle=function(){
+			    		rs+=0.1;
+			    		if(rs>6){
+			    			rs = 1;
+			    		}
+				    	ctx.fillStyle = '#46a0ce';
+				    	var posx=pos;
+					    for (var i = 0; i < positions.length; i += 1) {
+					        var center = positions[i].center;
+		        			var pos = map.lngLatToContainer(center);
+		        			var r = positions[i].radius;
+		        			if(retina){
+		        			    pos = pos.multiplyBy(2);
+		        			    r*=2;
+		        			}
+		        			//画实心圆
+		        			ctx.beginPath();
+		        			ctx.strokeStyle = 'rgba(87,197,249,1)'; 
+		        			ctx.moveTo(pos.x+r, pos.y)
+		        		  ctx.arc(pos.x, pos.y, r, 0, 2*Math.PI);       		   	        		
+			        		ctx.fill(); 
+			        		ctx.stroke();		        		
+			        		ctx.closePath();
+			        		//画外围圆环	        		
+			        		ctx.beginPath();
+			        		ctx.strokeStyle = 'rgba(87,197,249,0.5)'; 
+		        		  ctx.arc(pos.x, pos.y, r+rs, 0, 2*Math.PI);       		  
+									ctx.lineWidth = 0.5;
+			        		ctx.stroke();
+			        		ctx.closePath();
+			        		//画外围圆环	        		
+			        		ctx.beginPath();
+			        		ctx.strokeStyle = 'rgba(87,197,249,0.3)';  
+		        		  ctx.arc(pos.x, pos.y, r+rs+6, 0, 2*Math.PI);       		  
+									ctx.lineWidth = 0.5;
+			        		ctx.stroke();	        		
+			        		ctx.closePath();
+			        		//画外围圆环	        		
+			        		ctx.beginPath();
+			        		ctx.strokeStyle = 'rgba(87,197,249,0.1)';  
+		        		  ctx.arc(pos.x, pos.y, r+rs+12, 0, 2*Math.PI);       		  
+									ctx.lineWidth = 0.5;
+			        		ctx.stroke();	        		
+			        		ctx.closePath();
+			        		//标注地区
+			        		ctx.beginPath();			        		
+			        		ctx.font = 'lighter 15px 微软雅黑';
+									ctx.textAlign = 'center';
+									ctx.fillStyle = '#58c6fa';
+									
+									switch(positions[i].namePos){
+										case "bottom":
+											pos.y = pos.y+40;
+										break;
+										case "top":
+											pos.y = pos.y-40;
+										break;
+										case "left":
+											pos.x = pos.x-40;
+										break;
+										case "right":
+											pos.x = pos.x+40;
+										break;
+									}
+									ctx.fillText(positions[i].name,pos.x, pos.y);
+			        		ctx.stroke();	        		
+			        		ctx.closePath();
+		        	}	
+			    }
+
+				//创建一个临时canvas来缓存主canvas的历史图像
+				var backCanvas = document.createElement('canvas'),
+						backCtx = backCanvas.getContext('2d');
+				    backCanvas.width = width;
+				    backCanvas.height = height;
+				
+				    //设置主canvas的绘制透明度
+				    ctx.globalAlpha = 0.95;
+				
+				    //显示即将绘制的图像，忽略临时canvas中已存在的图像
+				 backCtx.globalCompositeOperation = 'copy';
+				
+				var render = function() {
+				    //1.先将主canvas的图像缓存到临时canvas中
+				    backCtx.drawImage(canvas, 0, 0, width, height);
+				
+				    //2.清除主canvas上的图像
+				    ctx.clearRect(0, 0, width, height);
+				
+				    //3.在主canvas上画新圆
+				    drawCircle();
+				
+				    //4.等新圆画完后，再把临时canvas的图像绘制回主canvas中
+				    ctx.drawImage(backCanvas, 0, 0, width, height);
+				};
+				
+				timer =setInterval(function(){
+					render();
+				},50)
+			}
+			
+			
+			customLayer.render = onRender;
+			customLayer.setMap(map);
+	    });
+	}
+
+
+</script>
+</body>
+</html>

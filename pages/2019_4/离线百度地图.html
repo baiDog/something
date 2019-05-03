@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>百度离线版2.0DEMO</title>
+<script type="text/javascript" src="../../js/lib/bdmap/apiv2.0.2.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/bmap.css"/>
+<script type="text/javascript" src="../../js/lib/bdmap/findtiles.js"></script>
+<script src="../../js/lib/bdmap/getmodules.js"></script>
+</head>
+<body>
+<div style="width:520px;height:340px;border:1px solid gray" id="container"></div>
+<br>
+<input type="button" value="findtiles" onclick="findtiles();">
+<br>
+<div id="list"></div>
+</body>
+</html>
+<script type="text/javascript">
+var map = new BMap.Map("container",{mapType: BMAP_NORMAL_MAP});      //设置卫星图为底图
+var point = new BMap.Point(111.404, 40.915);    // 创建点坐标
+map.centerAndZoom(point,5);                     // 初始化地图,设置中心点坐标和地图级别。
+
+//map.addControl(new BMap.MapTypeControl());
+map.addControl(new BMap.NavigationControl());
+map.enableScrollWheelZoom();                  // 启用滚轮放大缩小。
+map.enableKeyboard();                         // 启用键盘操作。  
+//map.setCurrentCity("北京");          // 设置地图显示的城市 此项是必须设置的
+
+
+
+var marker = new BMap.Marker(point);
+map.addOverlay(marker); 
+
+var polyline = new BMap.Polyline([
+        new BMap.Point(111.404, 40.915),
+        new BMap.Point(112.404, 42.915),
+        new BMap.Point(113.404, 39.915),
+        new BMap.Point(114.404, 42.915),
+        new BMap.Point(115.404, 39.915),
+        new BMap.Point(116.404, 42.915)
+    ], {strokeColor:"blue", strokeWeight:2, strokeOpacity:0.5});
+map.addOverlay(polyline);
+
+
+function addUrls(path, url){
+    var div = document.getElementById("list");
+    var anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.innerHTML = path;
+    div.appendChild(anchor);
+    var br = document.createElement("br");
+    div.appendChild(br);
+}
+
+
+function findtiles(){
+    var findAllTiles = downloadBaiduTiles();
+    findAllTiles(map, addUrls);
+}
+
+</script>

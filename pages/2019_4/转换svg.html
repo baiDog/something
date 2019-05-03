@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script src="https://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
+	</head>
+	<body>
+		<svg>
+<svg t="1555405283350" class="icon" style="" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="718" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200"><defs><style type="text/css"></style></defs><path d="M512 512m-268.52376322 0a52.4460475 52.4460475 0 1 0 537.04752644 0 52.4460475 52.4460475 0 1 0-537.04752645 0Z" p-id="719"></path></svg>
+	</body>
+</html>
+<script>
+	var polys = document.querySelectorAll('polygon,polyline');
+	[].forEach.call(polys,convertPolyToPath);
+	
+	function convertPolyToPath(poly){
+	  var svgNS = poly.ownerSVGElement.namespaceURI;
+	  var path = document.createElementNS(svgNS,'path');
+	  var pathdata = 'M '+poly.getAttribute('points');
+	  if (poly.tagName=='polygon') pathdata+='z';
+	  path.setAttribute('d',pathdata);
+	  poly.parentNode.replaceChild(path,poly);
+	  console.log($(path).attr('d'))
+	}
+	
+</script>

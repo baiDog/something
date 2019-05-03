@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			.img-light {
+			    position: relative;
+			    width: 640px;
+			    height: 384px;
+			}
+			
+			.img-light::after {
+			    content: "";
+			    height: 100%;
+			    width: 100px;
+			    transform: skewX(-25deg) translateZ(0);
+			    background-image: linear-gradient(90deg, hsla(0, 0%, 100%, 0), hsla(0, 0%, 100%, 0.3) 50%, hsla(0, 0%, 100%, 0));
+			    position: absolute;
+			    left: -150%;
+			    top: 0;
+			    z-index: 2;
+			}
+			
+			.img-light:hover::after {
+			    transition: left 2s ease-in-out;
+			    left: 150%;
+			}
+			.boxs{
+				width: 640px;
+			    height: 384px;
+			    background: #ccc;
+			}
+			
+			/*黑白照*/
+			.header {
+				height: 80px;
+				width: 60px;
+			    background: no-repeat center center;
+			    background-color: #ccc;
+			    background-attachment: scroll;
+			    background-size: cover;
+			    margin-bottom: 0;
+			    
+			    background-image: url(../../img/pic2.png);
+			    filter: grayscale(100%);
+			}
+
+		</style>
+	</head>
+	<body>
+		<div class="header"></div>
+		<div class="img-light">
+		    <div class="boxs"></div>
+		</div>
+	</body>
+</html>

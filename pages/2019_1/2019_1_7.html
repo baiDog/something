@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>2019_1_7</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+        </style>
+        <script src="../../js/lib/three.js"></script>
+        <script src="../../js/lib/stats.min.js"></script>
+        <script src="../../js/lib/OrbitControls.js"></script>
+        <script src="../../js/lib/dat.gui.min.js"></script>
+	</head>
+	<body>	
+        <div id="bbbbb"></div>	       
+		<script>
+
+			var container, stats;
+
+			var camera, scene, renderer,controls;
+
+			var windowHalfX = window.innerWidth / 2;
+
+			startsInit();
+
+			function init() {
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+                //状态 fps监控
+                stats = new Stats();
+                container.appendChild( stats.dom );
+                // 初始化渲染器
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+                container.appendChild( renderer.domElement );	               			
+
+                window.addEventListener( 'resize', onWindowResize, false );                              
+            }           
+            // 场景
+            function scenes(){
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color( 0xeeeeee);
+            }
+            // 相机
+            function cameras(){
+                camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+                camera.position.set( -20, 30, 40 );
+                //相机以哪个方向为上方
+                // camera.up.x = 0;
+                // camera.up.y = 0;
+                // camera.up.z = 1;
+				scene.add( camera );
+            }
+            
+            // 控制器
+            function control(){
+                controls = new THREE.OrbitControls(camera,renderer.domElement);
+                // 阻尼？
+                controls.enableDamping = true;
+                // 阻尼系数
+                controls.dampingFactor = 0.25;
+
+                // controls.minPolarAngle = Math.PI / 12;
+                // controls.maxPolarAngle = Math.PI / 2;
+            }
+
+            // 光
+            function lights(){
+                // var light = new THREE.PointLight( 0xffffff, 0.8 );
+                
+				var light = new THREE.DirectionalLight( 0xdfebff, 1 );
+				light.position.set( 50, 100, 200 );
+				light.position.multiplyScalar( 1.3 );
+
+				light.castShadow = true;
+
+				light.shadow.mapSize.width = 1024;
+				light.shadow.mapSize.height = 1024;
+
+				var d = 300;
+
+				light.shadow.camera.left = - d;
+				light.shadow.camera.right = d;
+				light.shadow.camera.top = d;
+				light.shadow.camera.bottom = - d;
+
+                light.shadow.camera.far = 1000;
+                
+                // 为啥相机添加光？
+				scene.add( light );
+            }
+            // 对象 物体
+            function addObjs(){
+                    // 辅助线
+                    var axes = new THREE.AxesHelper(20);
+                    scene.add(axes);
+                    // 平面
+                    var planeGeometry = new THREE.PlaneGeometry(60,20,1,1);
+                    var planeMaterial = new THREE.MeshBasicMaterial({
+                        color:0xcccccc,
+                    });
+                    var plane = new THREE.Mesh(planeGeometry,planeMaterial);
+
+                   var obs = new THREE.CubeGeometry(4,4,4);
+                   var material = new THREE.MeshBasicMaterial({
+                       color:0xff0000,wireframe:true
+                   });
+                   var cube = new THREE.Mesh(obs,material);
+                   cube.position.x= -4;
+                   cube.position.y = 3;
+                   cube.position.z = 0;
+                   scene.add(cube);                
+            }           
+            // 自适应屏幕
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+            }
+            
+			//整体初始化
+            function startsInit(){
+                init();
+                scenes();
+                lights();
+                cameras();
+                control();               
+                addObjs();
+			    animate();
+            }
+
+			function animate() {
+				requestAnimationFrame( animate );
+				render();
+				stats.update();
+			}
+
+			function render() {
+				renderer.render( scene, camera );
+			}
+
+		</script>
+
+	</body>
+</html>

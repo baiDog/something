@@ -1,0 +1,80 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta name="viewport" content="width=device-width initial-scale=1.0 maximum-scale=1.0 user-scalable=0">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>3D地图</title>
+<style>
+body,html{ margin:0;padding:0;font:12px/16px Verdana,Helvetica,Arial,sans-serif;width: 100%;height: 100%}
+.container{
+  height: 100%
+}
+</style>
+<script language="javascript" src="https://webapi.amap.com/maps?v=1.4.12&key=a8e537d857c62c38ca0d3e4de7016125&&plugin=AMap.ControlBar"></script>
+</head>
+<body >
+<div id="container" style="width:100%; height:100%;resize:both;"></div>
+<script language="javascript">
+var map;
+function mapInit(){
+  map = new AMap.Map('container', {
+//  resizeEnable: true,
+//  rotateEnable:true,
+    zoom: 16,
+    pitch:55,
+    rotation:-15,
+    viewMode:'3D',//开启3D视图,默认为关闭
+    features: ['bg', 'road'],
+    
+    expandZoomRange:true,
+    zooms:[3,20],
+    center:[106.7099840000,26.5788020000] //贵阳人民大道 中心点
+  });
+  
+  map.addControl(new AMap.ControlBar({
+    showZoomBar:false,
+    showControlButton:true,
+    position:{
+      right:'10px',
+      top:'10px'
+    }
+  }));
+  
+    // 添加 Object3DLayer 图层，用于添加 3DObject 对象
+    var object3Dlayer = new AMap.Object3DLayer();
+    map.add(object3Dlayer);
+
+    // 以不规则棱柱体 Prism 为例，添加至 3DObjectLayer 图层中
+    var paths = [
+        [106.709984,26.578802],
+        [106.709984,26.576682],
+        [106.708864,26.576682],
+        [106.708864,26.578802]
+    ];
+
+    var bounds = paths.map(function(path) {
+        return new AMap.LngLat(path[0], path[1]);
+    });
+
+    // 创建 Object3D 对象
+    var prism = new AMap.Object3D.Prism({
+        path: bounds,
+        height: 500,
+        color: 'rgba(100, 150, 230, 0.7)' // 支持 #RRGGBB、rgb()、rgba() 格式数据
+    });
+
+    // 开启透明度支持
+    prism.transparent = true;
+
+    // 添加至 3D 图层
+    object3Dlayer.add(prism);
+  
+  
+  
+}
+
+
+mapInit()
+</script>
+</body>
+</html>

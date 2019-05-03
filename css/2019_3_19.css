@@ -1,0 +1,46 @@
+*{
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+}
+html,body{
+	width: 100%;
+	height: 100%;
+}
+#app{
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	position: relative;
+	background: #ccc;
+}
+.controlBoxs{
+	position: absolute;
+	left: 0;
+	top: 20px;
+	width: 200px;
+	padding:10px 0 0 10px;
+	height: 100%;
+	background: rgba(0,0,0,.5);
+	color: #fff;
+	font-size:16px;
+	z-index: 78;
+}
+#canvas{
+	position: relative;
+	z-index: 77;
+	width: 100%;
+	height: 100%;
+}
+
+
+.btn{
+	display: inline-block;
+	padding: 10px 15px;
+	border-radius: 5px;
+	border: 1px solid #ccc;
+	cursor: pointer;
+}
+.btn:hover{
+	background: rgba(0,0,0,.1);
+}

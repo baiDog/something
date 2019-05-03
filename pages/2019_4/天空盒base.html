@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>路s</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+        </style>
+        <script src="../../js/lib/three.js"></script>
+        <script src="../../js/lib/stats.min.js"></script>
+        <script src="../../js/lib/OrbitControls.js"></script>
+	</head>
+	<body>	
+        <div id="bbbbb"></div>	
+
+		<script>
+
+			var container, stats;
+
+			var camera, scene, renderer,controls,roads,cityGeometry;
+
+			var windowHalfX = window.innerWidth / 2;
+
+			startsInit();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+                //状态 fps监控
+                stats = new Stats();
+                container.appendChild( stats.dom );
+                // 初始化渲染器
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+                container.appendChild( renderer.domElement );	               			
+
+				window.addEventListener( 'resize', onWindowResize, false );
+            }           
+            // 场景
+            function scene(){
+                scene = new THREE.Scene();
+//              scene.background = new THREE.Color( 0xf0f0f0 );
+            }
+            // 相机
+            function camera(){
+                camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 20000 );
+                camera.position.set(0,150,400);//将相机的位置摆放在（0，150，400）的位置。这里位置你可以更改以下，放在（0，0，400）也是可以的
+        		camera.lookAt(scene.position);
+				scene.add( camera );
+            }
+            
+            // 控制器
+            function control(){
+                controls = new THREE.OrbitControls(camera,renderer.domElement);
+                // 阻尼？
+                controls.enableDamping = true;
+                // 阻尼系数
+                controls.dampingFactor = 1;
+
+                // controls.minPolarAngle = Math.PI / 12;
+//              controls.maxPolarAngle = Math.PI / 2;
+            }
+
+            // 光
+            function light(){
+                // var light = new THREE.PointLight( 0xffffff, 0.8 );
+                
+				var light = new THREE.DirectionalLight( 0xdfebff, 1 );
+				light.position.set( 50, 100, 200 );				
+                
+                // 为啥相机添加光？
+				scene.add( light );
+            }
+            // 对象 物体
+            function addObjs(){
+
+				var path='../../img/skybox2/';
+				var directions =  [
+					"posx", "negx",
+					"posy","negy",
+					"posz", "negz" 
+				];
+
+		        var format = ".jpg";//格式
+//			    //创建盒子，并设置盒子的大小为( 5000, 5000, 5000 )
+		        var skyGeometry = new THREE.BoxGeometry( 5000, 5000, 5000 );
+//			    //设置盒子材质
+		        var materialArray = [];
+		        for (var i = 0; i < 6; i++){
+		        	materialArray.push( new THREE.MeshBasicMaterial({
+		                map: THREE.ImageUtils.loadTexture( path + directions[i] + format ),//将图片纹理贴上
+		                side: THREE.BackSide/*镜像翻转，如果设置镜像翻转，那么只会看到黑漆漆的一片，因为你身处在盒子的内部，所以一定要设置镜像翻转。*/
+		            }));
+		        }		            
+		        var skyMaterial = new THREE.MeshFaceMaterial( materialArray );
+		        var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );//创建一个完整的天空盒，填入几何模型和材质的参数
+		        scene.add( skyBox );//在场景中加入天空盒      
+            }
+            
+            // 自适应屏幕
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+            }
+            
+			//整体初始化
+            function startsInit(){
+                init();
+                scene();
+                light();
+                camera();
+                control();               
+                addObjs();
+			    animate();
+            }
+            
+			function animate() {
+				requestAnimationFrame( animate );
+				render();
+				stats.update();
+			}
+
+			function render() {
+				renderer.render( scene, camera );
+			}
+
+		</script>
+
+	</body>
+</html>

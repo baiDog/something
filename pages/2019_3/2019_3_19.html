@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>canvas生成3D</title>
+		<script src="../../js/lib/three.min.js"></script>
+		<script src="../../js/lib/vue.min.js"></script>
+		
+		<script src="../../js/lib/stats.min.js"></script>
+		
+		<link rel="stylesheet" href="../../css/2019_3_19.css" />
+	</head>
+	<body>
+		<div id="app">
+			<div class="controlBoxs">
+				<div class="btn" @click="openCanvas">画布展开</div>
+				<div class="btn" @click="create3d">生成3D</div>
+			</div>
+			<canvas v-show="canvasShow" id="canvas" ref= "canvas" @mousedown="canvsClick($event)" @mousemove="drawMove($event)" @mouseup="drawEnd($event)"></canvas>
+			
+			
+		</div>		
+	</body>
+	<script>
+		var vm = new Vue({
+			el:"#app",
+			data:{
+				ctx:null,
+				lines:[],
+				linesNow:{   //当前线
+					sX:0,
+					sY:0,
+					eX:0,
+					eY:0
+				},
+				isLine :true,
+				Down:false,
+				wallColor:'',
+				canvasShow:false,
+				//3d参数
+				camera:null,
+				renderer:null,
+				scene:null,
+				light:null,
+				stats:null,
+				
+				//墙的参数
+				wallWid:20,
+				wallHei:100,
+				radias :5,  //
+			},
+			methods:{
+				//转换中心后的坐标
+				linesC:function(lines){
+					let res = [];
+					let wWid = window.innerWidth,wHei = window.innerHeight;
+					let _this = this;
+					lines.map(function(v,i){
+						let obj = {
+							sX:Number(v.sX)-wWid/2,
+							sY:Number(v.sY)-wHei/2,
+							eX:Number(v.eX)-wWid/2,
+							eY:Number(v.eY)-wHei/2,
+						}
+						res.push(obj);
+					});
+					return res;
+				},
+				//打开关闭画布
+				openCanvas:function(){
+					this.canvasShow = !this.canvasShow;
+					if(this.canvasShow){
+						this.animated();
+					}else{						
+						this.animate2();
+					}
+				},
+				//canvas渲染
+				render:function(){
+					var myCanvas = this.$refs.canvas;
+					myCanvas.width = window.innerWidth;
+					myCanvas.height = window.innerHeight;
+					this.ctx = myCanvas.getContext("2d");
+//					this.ctx.
+					//先画格子 30*30						
+					this.animated();
+				},
+				canvsClick:function($event){
+					this.Down = true;
+					//假设默认是画线的状态
+					if(this.isLine){
+						this.linesNow.sX = $event.pageX;
+						this.linesNow.sY = $event.pageY;
+						this.linesNow.eX = $event.pageX;
+						this.linesNow.eY = $event.pageY;
+					}
+				},
+				drawMove:function(e){
+					if(this.Down){
+						this.linesNow.eX = e.pageX;
+						this.linesNow.eY = e.pageY;						
+					}else{
+						return;
+					}
+				},
+				drawEnd:function(){
+					this.Down = false;
+					//一条线画完，将点数据存入 lines数组，清空linesNow;	
+					//如果几乎没画， 不添加点
+					if(Math.abs(this.linesNow.eX-this.linesNow.sX)<5 && Math.abs(this.linesNow.eY-this.linesNow.sY)<5 ){
+						
+					}else{
+						this.lines.push(JSON.parse(JSON.stringify(this.linesNow)));	
+					}
+				
+					this.linesNow={   
+						sX:0,
+						sY:0,
+						eX:0,
+						eY:0
+					};
+				},
+				drawLines:function(){
+					var _this= this;
+					if(this.Down){
+						this.drawLine(this.linesNow);
+					}
+					this.lines.map(function(v,i){
+						_this.drawLine(v);
+					});
+					
+				},
+				//画线函数封装
+				drawLine:function(lines){	
+					this.ctx.beginPath();//开始路径
+					this.ctx.moveTo(lines.sX,lines.sY);//定义路径起始点
+					this.ctx.lineTo(lines.eX,lines.eY);//路径的去向
+					this.ctx.closePath();
+					this.ctx.stroke();
+				},
+				//循环渲染
+				animated:function(){
+					if(!this.canvasShow){
+						return;
+					}
+					//清除画布，重绘
+					this.ctx.clearRect(0,0,this.$refs.canvas.width,this.$refs.canvas.height);
+					
+					this.drawLines();	
+					
+					requestAnimationFrame(this.animated);
+				},
+				//按钮，生成3d；
+				create3d:function(){
+					var _this = this;
+			   		let res =this.linesC(this.lines);
+			   		res.map(function(v,i){
+			   			_this.drawWall(v);
+			   		});
+			   		
+					this.animate2();
+				},
+				
+				//3d
+				animate2:function() {	
+					if(this.canvasShow){
+						return;
+					}
+			        //更新性能插件
+			        this.stats.update();
+			
+			        this.renderer.render(this.scene, this.camera);
+			
+			        requestAnimationFrame(this.animate2);
+			   },
+			   //画墙
+			   drawBoxs:function(){
+			   		//基础3D环境
+			   		this.drawBaseBg();
+			   		var _this = this;
+			   		
+			   		this.lines.map(function(v,i){
+			   			_this.drawWall(v);
+			   		})
+			   		
+			   },
+			   //画墙
+			   drawWall:function(objs){
+			   	
+					//长度
+			   		let lens =Math.sqrt(Math.pow((Number(objs.eY) - Number(objs.sY)),2) + Math.pow((Number(objs.eX) - Number(objs.sX)),2) );
+			   		//位置
+			   		let posx = (objs.eX+objs.sX)/2;
+			   		let posz = (objs.eY+objs.sY)/2;
+			   		
+			   		
+			   		//旋转角度
+			   		let rotate =-Math.atan2((objs.eY-objs.sY),(objs.eX-objs.sX));
+			   		console.log(Math.atan2((objs.eY-objs.sY),(objs.eX-objs.sX)))
+//			   		return;
+			   		let box = new THREE.CubeGeometry(lens,this.wallHei,this.wallWid);
+			   		var material = new THREE.MeshBasicMaterial({color:0xcccccc});
+			   		var mesh = new THREE.Mesh(box,material);
+			   		mesh.position.set(posx,this.wallHei/2,posz);
+			   		mesh.rotation.y = rotate;
+			   		this.scene.add(mesh);
+//			   		console.log(this.scene);
+			   },
+			   //
+			   drawBaseBg:function(){
+			   	//辅助工具
+		        var helper = new THREE.AxesHelper(200);
+		        this.scene.add(helper);
+		
+		        // 地板
+		        var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 4000, 4000 ), new THREE.MeshPhongMaterial( { color: 0xffffff, depthWrite: false } ) );
+		        mesh.rotation.x = - Math.PI / 2;
+		        mesh.receiveShadow = true;
+		        this.scene.add( mesh );
+		
+		        //添加地板割线
+		        var grid = new THREE.GridHelper( 2000, 50, 0x000000, 0x000000 );
+		        grid.material.opacity = 0.2;
+		        grid.material.transparent = true;
+		        this.scene.add( grid );
+			   },
+				render2:function(){
+					this.renderer = new THREE.WebGLRenderer({antialias: true});
+					let renderer = this.renderer;
+					
+			        renderer.setPixelRatio(window.devicePixelRatio);
+			        renderer.setSize(window.innerWidth, window.innerHeight);
+			        renderer.setClearColor(0xeeeeee);
+			        renderer.shadowMap.enabled = true;
+			        //告诉渲染器需要阴影效果
+			        document.getElementById("app").appendChild(renderer.domElement);
+			        //加载3D基础环境
+			        this.initCamera();
+			        this.initScene();
+			        this.initLight();
+			        this.initStats();
+			        this.drawBoxs();
+				}, 
+				initCamera:function() {
+			        this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+			        this.camera.position.set(0, 450, 800 );
+			        this.camera.lookAt(0,0,0);
+			   },
+			   initScene:function() {
+			        this.scene = new THREE.Scene();
+			        this.scene.background = new THREE.Color( 0xa0a0a0 );
+			        this.scene.fog = new THREE.Fog( 0xa0a0a0, 5, 1600 );
+			   },
+			   initLight:function() {
+			        this.scene.add(new THREE.AmbientLight(0x444444));
+			
+			        this.light = new THREE.DirectionalLight(0xffffff);
+			        let light = this.light;
+			        light.position.set(0, 200, 100 );
+			
+			        light.castShadow = true;
+			        light.shadow.camera.top = 10;
+			        light.shadow.camera.bottom = -10;
+			        light.shadow.camera.left = -10;
+			        light.shadow.camera.right = 10;
+			
+			        //告诉平行光需要开启阴影投射
+			        light.castShadow = true;
+			
+			        this.scene.add(light);
+			   },
+			   initStats:function() {
+			        this.stats = new Stats();
+			        document.body.appendChild(this.stats.dom);
+			   },
+			   
+				
+			},
+			mounted:function(){
+				this.render();
+				this.render2();
+			},
+			created:function(){
+				
+			}
+		})
+	</script>
+</html>

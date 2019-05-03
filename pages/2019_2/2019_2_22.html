@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>粒子轮播</title>
+    <style type="text/css">
+        html, body {
+            margin: 0;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+            position: relative;
+            z-index: 55;
+        }
+        .box{
+        	position: absolute;
+        	z-index: 66;
+        	width: 200px;
+        	height: 50px;
+        	bottom: 20px;
+        	left: 47%;
+        	border:2px solid skyblue;
+        	color: skyblue;
+        	cursor: pointer;
+        	font-size: 30px;
+        	line-height: 46px;
+        	text-align: center;
+        	font-weight: bold;
+        }
+        .box1{
+        	left: 20%;
+        }
+        .box2{
+        	left: 50%;
+        }
+        .box3{
+        	left: 80%;
+        }
+    </style>
+</head>
+
+<body onload="draw();">
+	<div class="box box2" onclick="btnClick1()">白狗</div>
+	<!--<div class="box box1" onclick="btnClick2()">胡磊</div>
+	<div class="box box3" onclick="btnClick3()">heart</div>-->
+</body>
+<script src="../../js/lib/three.js"></script>
+<script src="../../js/lib/OrbitControls.js"></script>
+<script src="../../js/lib/stats.min.js"></script>
+<script src="../../js/lib/dat.gui.min.js"></script>
+<script src="../../js/lib/Detector.js"></script>
+<script src="../../js/lib/tween.min.js"></script>
+<!--<script src="../../js/lib/Projector.js"></script>-->
+
+<script>                                                     
+    var renderer, camera, scene, gui, light, stats, controls;
+    
+    var baiObjs={},qiuObjs={};
+    
+	var img,canvas,content,points,lens = 40000;
+	//白狗
+	function btnClick1(){
+   		pointMove(baiObjs);
+   }
+	
+	//初始点
+	var basePoint=new Float32Array(120000),baseArea=640,baseColor=new Float32Array(120000);
+	for(var i=0;i<lens;i++){
+		var x= Number(Math.random()*baseArea)-baseArea/2;
+		var y= Number(Math.random()*baseArea)-baseArea/2;
+		var z= Number(Math.random()*baseArea)-baseArea/2;
+
+		basePoint[ 3*i ]     = x;
+        basePoint[ 3*i + 1 ] = y;
+        basePoint[ 3*i + 2 ] = z;
+		
+		var r= Math.floor(Math.random()*80);
+		var g= Math.floor(Math.random()*160);
+		var b= Math.floor(Math.random()*255);
+		
+		baseColor[ 3*i ]     = r;
+        baseColor[ 3*i + 1 ] = g;
+        baseColor[ 3*i + 2 ] = b;
+	}
+	
+    function initRender() {
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0xeeeeee);
+        renderer.shadowMap.enabled = true;
+        //告诉渲染器需要阴影效果
+        document.body.appendChild(renderer.domElement);
+    }
+
+    function initCamera() {
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
+        camera.position.set(0,40, 100 );
+    }
+
+    function initScene() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color( 0xa0a0a0 );
+        scene.fog = new THREE.Fog( 0xa0a0a0, 5, 300 );
+    }
+
+    //初始化dat.GUI简化试验流程
+    function initGui() {
+        //声明一个保存需求修改的相关数据的对象
+        gui = {
+            bump:0.03,
+            animation:false
+        };
+        var datGui = new dat.GUI();
+        //将设置属性添加到gui当中，gui.add(对象，属性，最小值，最大值）
+        datGui.add(gui, "bump", -1, 1).onChange(function (e) {
+            cube1.material.bumpScale = e;
+        });
+
+        datGui.add(gui, "animation");
+    }
+
+    function initLight() {
+        scene.add(new THREE.AmbientLight(0x444444));
+
+        light = new THREE.DirectionalLight(0xffffff);
+        light.position.set(0, 600, 240 );
+
+        light.castShadow = true;
+        light.shadow.camera.top = 10;
+        light.shadow.camera.bottom = -10;
+        light.shadow.camera.left = -10;
+        light.shadow.camera.right = 10;
+
+        //告诉平行光需要开启阴影投射
+        light.castShadow = true;
+
+//      scene.add(light);
+    }
+
+    function initModel() {
+
+        //辅助工具
+//      var helper = new THREE.AxesHelper(50);
+//      scene.add(helper);
+
+        // 地板
+        var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 400, 400 ), new THREE.MeshPhongMaterial( { color: 0xffffff, depthWrite: false } ) );
+        mesh.rotation.x = - Math.PI / 2;
+        mesh.receiveShadow = true;
+        scene.add( mesh );
+
+        //添加地板割线
+        var grid = new THREE.GridHelper( 400, 50, 0x000000, 0x000000 );
+        grid.material.opacity = 0.2;
+        grid.material.transparent = true;
+        scene.add( grid );
+			
+		canvas = document.createElement('canvas');
+		content = canvas.getContext('2d');
+		canvas.width = 200;
+		canvas.height = 200;
+//		document.body.appendChild( canvas );
+		//  container.appendChild( canvas );
+		img = new Image();
+		img.src = "../../img/pic.png";
+		canvas.style.position = 'absolute';
+		img.onload = function () {
+		    content.drawImage(img, 10, 10, canvas.width, canvas.height);
+		    var imgDate = content.getImageData(0,0,canvas.width, canvas.height);
+		    createPotCloud(imgDate);   //创建点云
+		};
+
+    }
+  	getPic("../../img/pic.png",'bai');
+//	getPic("../../img/pic2.png",'qiu');
+  	//get 白
+  	function getPic(imgUrl,type){
+  		canvas = document.createElement('canvas');
+		content = canvas.getContext('2d');
+		canvas.width = 200;
+		canvas.height = 200;
+//		document.body.appendChild( canvas );
+		//  container.appendChild( canvas );
+		img = new Image();
+		img.src = imgUrl;
+		canvas.style.position = 'absolute';
+		img.onload = function () {
+		    content.drawImage(img, 10, 10, canvas.width, canvas.height);
+		    var imgDate = content.getImageData(0,0,canvas.width, canvas.height);
+		    objs = getPoint(imgDate);
+		    switch(type){
+		    	case "bai":
+		    	baiObjs = objs;
+		    	break;
+		    	case "qiu":
+		    	qiuObjs = objs;
+		    	break;
+		    }
+		};
+  	}
+  
+  	function getPoint(imgDate){
+  		var particles = canvas.width * canvas.height;
+	
+	    var positions = new Float32Array( particles * 3 );
+	    var colors = new Float32Array( particles * 3 );
+	    var objs = {
+	    	color:colors,
+	    	pos:positions
+	    };
+	    for ( var i = 0; i < positions.length; i ++ ) {
+	        // positions
+	        positions[ 3*i ]     = parseInt(i%canvas.width);
+	        positions[ 3*i + 1 ] = 200+ parseInt((canvas.height-i)/canvas.width) ;
+	        positions[ 3*i + 2 ] = 0;
+	        // colors
+	
+	        colors[ 3*i ]     = imgDate.data[ 4*i ]/255.0;
+	        colors[ 3*i + 1 ] = imgDate.data[ 4*i + 1]/255.0;
+	        colors[ 3*i + 2 ] = imgDate.data[ 4*i + 2]/255.0;
+	    }
+	    objs.colors = colors;
+	    objs.positions = positions;
+	    return objs;
+  	}
+  	function createPotCloud(imgDate) {     //创建点云
+	    var particles = canvas.width * canvas.height;
+	    var geometry = new THREE.BufferGeometry();
+	
+//	    var objs = getPoint(imgDate);
+
+	    geometry.addAttribute( 'position', new THREE.BufferAttribute( basePoint, 3 ) );
+	    geometry.addAttribute( 'color', new THREE.BufferAttribute( baseColor, 3 ) );
+
+	    var material = new THREE.PointsMaterial( { size: 0.4, vertexColors: THREE.VertexColors } );
+	    points = new THREE.Points( geometry, material );
+	    points.scale.set(0.25,0.25,0.25);
+	    scene.add( points );
+	
+	}
+  	
+  	function pointMove(position1){
+		//移除粒子浮动动画
+		TWEEN.removeAll();
+		var pointNow = points.geometry.attributes;
+		var colorNow = pointNow.color.array;
+		var posNow = pointNow.position.array;
+		
+		
+		var lens0 = position1.length;
+       	var pos = {val:1};
+       	var callback=function(){
+//     		console.log(this.val)
+		    var val = this.val;
+		    var particles = points.geometry.attributes;		
+		    var pos = particles.position.array;
+		    var color = particles.color.array;
+//		    return console.log(particles);
+		    for(var i = 0; i < lens; i++) {
+		
+			        pos[i*3] = posNow[i*3] * val + position1.pos[i*3] * (1-val);
+			        pos[i*3+1] = posNow[i*3+1] * val + position1.pos[i*3+1] * (1-val);
+			        pos[i*3+2] = posNow[i*3+2] * val + position1.pos[i*3+2] * (1-val);			
+		    	
+		    	
+			    	color[i*3] = colorNow[i*3] * val + position1.color[i*3] * (1-val);
+			        color[i*3+1] = colorNow[i*3+1] * val + position1.color[i*3+1] * (1-val);
+			        color[i*3+2] = colorNow[i*3+2] * val + position1.color[i*3+2] * (1-val);	
+	       	        
+		    }
+		    points.geometry.verticesNeedUpdate = true;
+		    var position= new THREE.BufferAttribute( pos, 3 ) ;
+		    var color  = new THREE.BufferAttribute(color,3);
+		    points.geometry.attributes.position = position;
+		    points.geometry.attributes.color = color;
+		}
+       	tween = new TWEEN.Tween(pos).to({val: 0}, 2000).easing(TWEEN.Easing.Quadratic.InOut).delay(500).onUpdate(callback);
+		tween.start();
+    }
+
+    //初始化性能插件
+    function initStats() {
+        stats = new Stats();
+        document.body.appendChild(stats.dom);
+    }
+
+    function initControls() {
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        //设置控制器的中心点
+        controls.target.set( 0, 5, 0 );
+        // 如果使用animate方法时，将此函数删除
+        //controls.addEventListener( 'change', render );
+        // 使动画循环使用时阻尼或自转 意思是否有惯性
+        controls.enableDamping = true;
+        //动态阻尼系数 就是鼠标拖拽旋转灵敏度
+        //controls.dampingFactor = 0.25;
+        //是否可以缩放
+        controls.enableZoom = true;
+        //是否自动旋转
+        controls.autoRotate = false;
+        controls.autoRotateSpeed = 0.5;
+        //设置相机距离原点的最远距离
+        controls.minDistance = 1;
+        //设置相机距离原点的最远距离
+        controls.maxDistance = 2000;
+        //是否开启右键拖拽
+        controls.enablePan = true;
+    }
+
+    function render() {
+        controls.update();
+    }
+
+    //窗口变动触发的函数
+    function onWindowResize() {
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+    }
+
+    function animate() {
+        //更新控制器
+        render();
+
+        //更新性能插件
+        stats.update();
+        
+		 TWEEN.update();
+		
+        renderer.render(scene, camera);
+
+        requestAnimationFrame(animate);
+    }
+
+    function draw() {
+        //兼容性判断
+        if (!Detector.webgl) Detector.addGetWebGLMessage();
+
+        initGui();
+        initRender();
+        initScene();
+        initCamera();
+        initLight();
+        initModel();
+        initControls();
+        initStats();
+
+        animate();
+        window.onresize = onWindowResize;
+    }
+
+
+
+</script>
+</html>
