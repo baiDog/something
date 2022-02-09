@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="../../js/lib/vue.min.js"></script>
+  <style>
+    ul, li {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    li span{
+      padding: 0 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <p>螺旋数组</p>
+    <input v-model="value" />
+    <button @click="handleDeal">生成</button>
+    <ul>
+      <li v-for="item in lists">
+        <span v-for="itemIn in item">
+          {{itemIn}}
+        </span>
+      </li>
+    </ul>
+  </div>
+</body>
+<script>
+  const myapp = new Vue({
+    el: '#app',
+    data: function(){
+      return {
+        lists: [],
+        value: undefined,
+      }
+    },
+    methods: {
+      handleDeal: function() {
+        // right ---> down ---> left ---> up ----> right (一圈轮回)
+        const directions = [
+          { id: 'right', x: 1, y: 0 },
+          { id: 'down', x: 0, y: 1 },
+          { id: 'left', x: -1, y: 0 },
+          { id: 'up', x: 0, y: -1 },
+        ];
+        let directionNow = 0; // 方向；
+        let point = {x: 0, y: 1}; // 当前位置
+        const attrs = this.createBaseAttr();
+        attrs[point.y][point.x] = 0;
+        // 递归继续去走 turn 转向后走的次数
+        const dealAttr = (attr, turn) => {
+          const { x: xTo, y: yTo } = directions[directionNow] || {}; // 下一步的位移方向。
+          if((xTo || yTo)) {
+            const checkPoint1 = {x: xTo * 2 + point.x, y: yTo * 2 + point.y}; 
+            // 隔了一个位置是不是存在且为1  可以继续
+            if (checkPoint1.x >= 0 && checkPoint1.y >=0 && attr[checkPoint1.y] && attr[checkPoint1.y][checkPoint1.x] === 1) {
+              attr[yTo + point.y][xTo + point.x] = 0;
+              point = {x: xTo + point.x, y: yTo + point.y}; 
+              // 继续走下去
+              dealAttr(attr, turn + 1);
+            } else if (turn > 2) { // turn 转向后走的次数 大于，则可以转向
+              // 转向
+              directionNow = directionNow >= 3 ? 0 : directionNow + 1;
+              dealAttr(attr, 1);
+            }
+          }
+        }
+        dealAttr(attrs, 1);
+        this.lists = attrs;
+      },
+      // 创建基础数组
+      createBaseAttr: function() {
+        var arr = [];
+        for(var i = 0;i < this.value; i++){
+          arr[i] = []; //每行有10列
+          for(var j = 0;j < this.value; j++){
+            arr[i][j] = 1;
+          }
+        }
+        return arr;
+      }
+    },
+  })
+</script>
+</html>

@@ -1,0 +1,310 @@
+html, body {
+    height: 100%;
+}
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+body {
+    background-color: #000000;
+    margin: 0;
+    font-family: Helvetica, sans-serif;;
+    overflow: hidden;
+}
+
+a {
+    color: #ffffff;
+}
+
+#info {
+    position: absolute;
+    width: 100%;
+    color: #ffffff;
+    padding: 5px;
+    font-family: Monospace;
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+    z-index: 1;
+}
+
+#menu {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+}
+.bss{
+	height: 100vh;
+	width: 100%;	
+}
+.element {
+    width: 120px;
+    height: 160px;
+    box-shadow: 0px 0px 12px rgba(0,255,255,0.5);
+    border: 1px solid rgba(127,255,255,0.25);
+    text-align: center;
+    cursor: default;
+}
+
+.element:hover {
+    box-shadow: 0px 0px 12px rgba(0,255,255,0.75);
+    border: 1px solid rgba(127,255,255,0.75);
+}
+
+    .element .number {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        font-size: 12px;
+        color: rgba(127,255,255,0.75);
+    }
+
+    .element .symbolBox {
+        position: absolute;
+        top: 24px;
+        left: 15px;
+        right: 0px;
+        /* font-size: 60px;
+        font-weight: bold;
+        color: rgba(255,255,255,0.75);  */
+        /* text-shadow: 0 0 10px rgba(0,255,255,0.95); */
+        display: block;
+         width: 90px;
+        height: 110px;
+        overflow: hidden;
+                        
+    }
+    .element .symbolBox img{
+        height: 100%;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .element .details {
+        position: absolute;
+        bottom: 6px;
+        left: 0px;
+        right: 0px;
+        font-size: 12px;
+        color: rgba(127,255,255,0.75);
+    }
+
+button {
+    color: rgba(127,255,255,0.75);
+    background: transparent;
+    outline: 1px solid rgba(127,255,255,0.75);
+    border: 0px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+button:hover {
+    background-color: rgba(0,255,255,0.5);
+}
+button:active {
+    color: #000000;
+    background-color: rgba(0,255,255,0.75);
+}
+.changeImgBoxs{
+    background-color: rgba(0,255,255,0.75);
+    width: 440px;
+    height: 600px;
+    position: relative;
+    overflow: hidden;
+}
+.changeImgBoxs .details{
+    position: absolute;
+    bottom: 26px;
+    left: 0px;
+    right: 0px;
+    font-size: 36px;
+    color: rgba(127,255,255,0.75);
+    text-align: center;
+}
+.symbolBox2{
+    width: 400px;
+    margin-left: 20px;
+    margin-top: 20px;
+    height: 500px;
+    position: relative;
+    overflow: hidden;
+}
+.symbol2{
+    position: absolute;
+    top: 0;
+    left: 50%;				
+    height: 100%;
+    transform: translateX(-50%);
+}
+
+.priceLists{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,.8);
+}
+.closeBtn{
+    position: absolute;
+    right: 30px;
+    top: 20px;
+    width: 40px;
+    height: 40px;
+    font-size: 38px;
+    line-height: 40px;
+    text-align: center;
+    border-radius: 50%;
+    border: 2px solid rgba(127,255,255,0.75);
+    color: rgba(127,255,255,0.75);
+    cursor: pointer;
+}
+
+.listBoxs{
+    width: 80%;
+    height: 80%;
+    border-radius: 20px;
+    border:  2px solid rgba(127,255,255,0.75);
+    box-shadow: 0 0 20px rgba(127,255,255,0.75);
+    margin: 0 auto;
+    margin-top: 80px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+.listBoxs .tit{
+    height: 80px;
+    width: 100%;
+    font-size: 38px;
+    text-align: center;
+    line-height: 80px;
+    color: rgba(127,255,255,0.75);
+}
+.listBoxs .listBox{
+    min-height: 80px;
+    padding: 20px;
+    display: flex;
+    align-content: center;
+    padding-left: 60px;
+}
+.listBox label{
+    font-size: 24px;
+    color: rgba(127,255,255,0.75);
+    display: block;
+    width: 120px;
+    text-align: right;
+    padding-right: 20px;
+    line-height: 80px;
+}
+.listBox dl{
+    width: 110px;
+    height: 150px;
+    padding: 10px;
+    border:2px solid rgba(127,255,255,0.75);
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(127,255,255,0.75);
+    background: rgba(127,255,255,0.25);
+    margin-right: 20px;
+}
+.listBox dl dt{
+    width: 100%;
+    height: 80%;
+    position: relative;
+    overflow: hidden;
+}
+.listBox dl dt img{
+    height: 100%;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.listBox dl dd{
+    text-align: center;
+    font-size: 15px;
+    line-height: 40px;
+    color: rgba(127,255,255,0.75);
+}
+.listBoxs .clear{
+    position: absolute;
+    left: 30px;
+    bottom:30px;
+    width: 120px;
+    height: 50px;
+    font-size: 20px;
+    text-align: center;
+    line-height: 50px;
+    cursor: pointer;
+    color: rgba(127,255,255,0.75);
+    border-radius: 5px;
+    border:2px solid rgba(127,255,255,0.75);
+    box-shadow: 0 0 10px rgba(127,255,255,0.75);
+    background: rgba(127,255,255,0.25);
+}
+.listBoxs .clear2{
+    right: 30px;
+    left: auto;
+}
+.spic{
+	position: absolute;
+	right: 20px;
+	top: 70px;
+	width: 400px;
+	height: 80%;
+}
+/*特等奖*/
+.spic p{
+	color: rgba(127,255,255,0.75);
+	font-size: 25px;
+	line-height: 3;
+}
+.spic dl{
+	width: 240px;
+    height: 320px;
+    padding: 20px;
+    border:2px solid rgba(127,255,255,0.75);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(127,255,255,0.75);
+    background: rgba(127,255,255,0.25);
+    margin-right: 20px;
+}
+.spic dl dt{
+    width: 100%;
+    height: 83%;
+    position: relative;
+    overflow: hidden;
+}
+.spic dl dt img{
+    height: 100%;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.spic dl dd{
+    text-align: center;
+    font-size: 32px;
+    line-height: 70px;
+    color: rgba(127,255,255,0.75);
+}
+
+
+/*礼包*/
+.imgBox{
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 300px;
+	height: 400px;
+	background: rgba(0,0,0,.3);	
+	margin-top: 100px;
+}
+.imgBox p{
+	height: 100px;
+	line-height: 140px;
+	color: rgba(127,255,255,0.75);
+	font-size: 36px;
+	text-align: center;
+}
+.imgBox	img{
+	width: 300px;
+	height: 300px;	
+}

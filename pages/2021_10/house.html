@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>路s</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <style>
+    body {
+      font-family: Monospace;
+      background-color: #f0f0f0;
+      margin: 0px;
+      overflow: hidden;
+    }
+  </style>
+  <script src="../../js/lib/three.js"></script>
+  <script src="../../js/lib/stats.min.js"></script>
+  <script src="../../js/lib/ThreeBSP.js"></script>
+  <script src="../../js/lib/OrbitControls.js"></script>
+</head>
+
+<body>
+  <div id="bbbbb"></div>
+  <script>
+
+    var container, stats;
+
+    var camera, scene, renderer, controls, roads, cityGeometry;
+
+    var windowHalfX = window.innerWidth / 2;
+
+    const wallHei = 3;
+    const wallWid = 0.2;
+    const radias = 5;
+
+    const lines = [
+      { sX: - 5, sY:-4, eX:-5, eY:4 },
+      { sX:  5, sY:4, eX:5, eY:-4 },
+      { sX: - 5, sY:-4, eX:5, eY:-4 },
+      { sX: -5, sY:4, eX:5, eY:4 },
+    ]
+    startsInit();
+
+    function init() {
+
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      //状态 fps监控
+      stats = new Stats();
+      container.appendChild(stats.dom);
+      // 初始化渲染器
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
+
+      // window.addEventListener('resize', onWindowResize, false);
+    }
+    // 场景
+    function createScene() {
+      scene = new THREE.Scene();
+      //              scene.background = new THREE.Color( 0xf0f0f0 );
+    }
+    // 相机
+    function createCamera() {
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+      camera.position.set(0, 4, 8);//将相机的位置摆放在（0，150，400）的位置。这里位置你可以更改以下，放在（0，0，400）也是可以的
+      camera.lookAt(scene.position);
+      scene.add(camera);
+    }
+
+    // 控制器
+    function createControl() {
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      // 阻尼？
+      controls.enableDamping = true;
+      // 阻尼系数
+      controls.dampingFactor = 1;
+
+      controls.minPolarAngle = Math.PI / 12;
+      controls.maxPolarAngle = Math.PI * 19 / 40;
+    }
+
+    // 光
+    function createlight() {
+      // var light = new THREE.PointLight( 0xffffff, 0.8 );
+
+      var light = new THREE.DirectionalLight(0xdfebff, 1);
+      light.position.set(8, 10, 20);
+
+      // 为啥相机添加光？
+      scene.add(light);
+    }
+    // 对象 物体
+    function addObjs() {
+      drawBaseBg();
+      drawWalls(); // 画墙
+    }
+    function drawBaseBg() {
+      //辅助工具
+      var helper = new THREE.AxesHelper(4);
+      scene.add(helper);
+      // 地板
+      var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 10, 8), new THREE.MeshPhongMaterial( { color: 0xffffff, depthWrite: false } ) );
+      mesh.rotation.x = - Math.PI / 2;
+      // mesh.receiveShadow = true;
+      scene.add( mesh );
+      //添加地板割线
+      var grid = new THREE.GridHelper( 10, 10, 0x000000, 0x000000 );
+      grid.material.opacity = 0.2;
+      grid.material.transparent = true;
+      scene.add( grid );
+		};
+    // 画墙
+    function drawWalls() {
+      lines.forEach(function(v,i){
+			  drawWall(v, i);
+			});
+    }
+
+     //画墙
+    function drawWall(objs, index) {
+    //长度
+      let lens =Math.sqrt(Math.pow((Number(objs.eY) - Number(objs.sY)),2) + Math.pow((Number(objs.eX) - Number(objs.sX)),2) );
+      //位置
+      let posx = (objs.eX+objs.sX)/2;
+      let posz = (objs.eY+objs.sY)/2;
+      //旋转角度
+      let rotate =-Math.atan2((objs.eY-objs.sY),(objs.eX-objs.sX));
+      let box = new THREE.CubeGeometry(lens,wallHei,wallWid);
+      var material = new THREE.MeshBasicMaterial({color:0xcccccc});
+      var qiangTiMesh;
+      var mesh = new THREE.Mesh(box);
+      // var cubeMaterial = new THREE.MeshBasicMaterial({
+      //       tmap:THREE.ImageUtils.loadTexture('module/1.jpg')
+      //     })
+      if (index === 3) {
+        //窗户
+        var door = new THREE.BoxGeometry(1.5,2.2, 0.2);
+        var doorMesh = new THREE.Mesh(door);
+        doorMesh.position.y = -0.39;
+        // doorMesh.position.set(posx,wallHei/2,posz);
+        // doorMesh.rotation.y = rotate;
+
+        var cubeBSP = new ThreeBSP(mesh);
+        var doorBSP = new ThreeBSP(doorMesh);
+        var resultBSP = cubeBSP.subtract(doorBSP);
+        // 墙体挖窗户
+        var result = resultBSP.toMesh();
+        var cubeGeometry = result.geometry;
+        qiangTiMesh = new THREE.Mesh(cubeGeometry,material); 
+      }  else {
+        qiangTiMesh = new THREE.Mesh(box,material);
+      }
+      qiangTiMesh.position.set(posx,wallHei/2,posz);
+      qiangTiMesh.rotation.y = rotate;
+        scene.add(qiangTiMesh); 
+      } 
+    // // 自适应屏幕
+    // function onWindowResize() {
+    //   camera.aspect = window.innerWidth / window.innerHeight;
+    //   camera.updateProjectionMatrix();
+    //   renderer.setSize(window.innerWidth, window.innerHeight);
+    // }
+
+    //整体初始化
+    function startsInit() {
+      init();
+      createScene();
+      createlight();
+      createCamera();
+      createControl();
+      addObjs();
+      animate();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      render();
+      stats.update();
+    }
+
+    function render() {
+      renderer.render(scene, camera);
+    }
+
+  </script>
+
+</body>
+
+</html>

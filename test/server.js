@@ -3,7 +3,7 @@ const express = require('express')
 const path = require('path')
 const app = express()
 
-app.use(express.static(path.join(__dirname, '../something')))
+app.use(express.static(path.join(__dirname, '../test')))
 
 app.listen(8081, () => {
   console.log(`App listening at port 8081`)

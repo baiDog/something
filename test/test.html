@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<title>test</title>
+		<link rel="stylesheet" href="./css/test.css">
+		<script src="js/three.min.js"></script>
+		<script src="js/tween.min.js"></script>
+		<script src="js/stats.min.js"></script>
+		<script src="js/TrackballControls.js"></script>
+		<script src="js/CSS3DRenderer.js"></script>
+		<script src="js/vue.min.js"></script>
+		<!-- 创建星星 -->
+		<script src="js/star.js"></script>
+		<!-- 数据位置 -->
+		<script src="js/data.js"></script>
+	</head>
+	<body>
+		<div id="container"></div>
+		<div id="vueBoxs">
+			<div class="bss" @keypress.space="keyDowns()">
+				<div class="imgBox">
+					<p v-text="priceNow"></p>
+					<img src="./img/礼包.png" alt="" />
+				</div>
+				<div id="menu">
+					<button id="table" @click="start()">开始</button>
+					<button id="sphere" @click="closes()">结束</button>								
+					<button id="reset" style="margin-left:40px;" @click="resets()">照片墙</button>
+					<button id="lists" @click ="listShow = true">中奖名单</button>
+				</div>
+				<!--抽奖音乐标签-->
+				<audio id="music" src="./music/04-抽奖音乐 猪突猛進.mp3" loop></audio>
+				<!--抽奖音乐标签-->
+				<audio id="music2" src="./music/9629.mp3"></audio>
+				
+				<div class="priceLists" v-show ="listShow">				
+					<div class="listBoxs">
+						<div class="closeBtn" @click="listShow =false">&times;</div>
+						<div class="tit">获奖名单</div>
+						<div class="listBox">
+							<label for="">一等奖：</label>
+							<dl v-for="(v,i) in price1">
+								<dt><img :src="v.img" alt=""></dt>
+								<dd v-text= "v.name"></dd>
+							</dl>
+						</div>
+						<div class="listBox">
+							<label for="">二等奖：</label>
+							<dl v-for="(v,i) in price2">
+								<dt><img :src="v.img" alt=""></dt>
+								<dd v-text= "v.name"></dd>
+							</dl>
+						</div>
+						<div class="listBox">
+							<label for="">三等奖：</label>
+							<dl v-for="(v,i) in price3">
+								<dt><img :src="v.img" alt=""></dt>
+								<dd v-text= "v.name"></dd>
+							</dl>
+						</div>
+						<div class="spic">
+							<p>特等奖：</p>
+							<dl v-show="spic.img">
+								<dt><img :src="spic.img" alt=""></dt>
+								<dd v-text= "spic.name"></dd>
+							</dl>
+						</div>
+						<div class="clear" @click="clearLists">清空</div>
+						<div class="clear clear2" @click="listShow =false">关闭</div>
+					</div>
+				</div>		
+			</div>
+			
+		</div>
+		
+	</body>
+</html>
+		<script>
+var table = getData();
+var tableLens = table.length/2;
+var camera, scene, renderer;
+var controls;
+var objects = [];
+var targets = {chaos:[], table: [], sphere: [], helix: [], grid: [] };
+var ang = 0,moving = false,objectsss,starBG,isMoving = false;  //objectsss 为切换的图片的
+var music = document.getElementById('music');
+var music2 = document.getElementById('music2');
+var cpx = 0,cpy = 0,cpz = 0,crx = 0,cry = 0,crz = 0;
+
+function init() {
+	camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 10000 );
+	camera.position.z = 2000;
+	scene = new THREE.Scene();
+	// table
+	for ( var i = 0; i < table.length; i += 2 ) {
+		// 每个图标的盒子
+		var element = document.createElement( 'div' );
+		element.className = 'element';
+		element.style.backgroundColor = 'rgba(0,127,127,' + ( Math.random() * 0.5 + 0.25 ) + ')';
+		// 索引
+		var number = document.createElement( 'div' );
+		number.className = 'number';
+		number.textContent = (i/2) + 1;
+		element.appendChild( number );
+		// 图片
+		var symbolBox = document.createElement( 'div' );
+		var symbol = document.createElement( 'img' );
+		symbolBox.className = 'symbolBox';
+		symbol.className = 'symbol';
+		symbol.src = table[i];
+		symbolBox.appendChild(symbol);
+		element.appendChild( symbolBox );
+		// 姓名
+		var details = document.createElement( 'div' );
+		details.className = 'details';
+		details.innerHTML = table[ i + 1 ];
+		element.appendChild( details );
+		// 图标变成3d内的对象，放入场景中
+		var object = new THREE.CSS3DObject( element );
+		object.position.x = Math.random() * 3400 - 1700;
+		object.position.y = Math.random() * 3400 - 1700;
+		object.position.z = Math.random() * 3400 - 1700;
+		object.name=table[ i + 1 ];
+		scene.add( object );
+		objects.push( object );
+		// 根据索引，定制位置
+		var object = new THREE.Object3D();
+		var iy = Math.floor((i/2)/9);
+		var ix = (i/2)%9;
+		object.position.x = (ix * 140 ) -540;
+		object.position.y = - ( iy * 180 ) + 480;
+		targets.table.push( object );
+	}
+
+	// 创建切换图片
+	var elements = document.createElement( 'div' );
+	elements.className = 'changeImgBoxs';
+	// element.style.backgroundImage = "url(./img/pic.png)";
+	elements.style.backgroundColor = 'rgba(0,127,127,' + ( Math.random() * 0.5 + 0.25 ) + ')';
+
+	var symbolBox = document.createElement( 'div' );
+	var symbol = document.createElement( 'img' );
+	symbol.setAttribute("id", "changeImg");
+	symbolBox.className = 'symbolBox2';
+	symbol.className = 'symbol2';
+	symbol.src = table[0];
+	symbolBox.appendChild(symbol);
+	elements.appendChild( symbolBox );
+
+	var details = document.createElement( 'div' );
+	details.setAttribute("id", "detailss");
+	details.className = 'details';
+	details.innerHTML = table[1];
+	elements.appendChild( details );
+
+	objectsss = new THREE.CSS3DObject( elements );
+	objectsss.position.x = 0;
+	objectsss.position.y = 20000;
+	objectsss.position.z = 0;
+	scene.add( objectsss );
+// 散乱随机位置
+var vector = new THREE.Vector3();
+for ( var i = 0, l = objects.length; i < l; i ++ ) {
+	var phi = Math.acos( -1 + ( 2 * i ) / l );
+	var theta = Math.sqrt( l * Math.PI ) * phi;
+	var object = new THREE.Object3D();
+	var py = Math.random() * 3400 - 1700;
+	if(py<400&&py>-400){    //防止停止时，图片位置不好挡住中央的图片
+		if(py<0){
+			py-=400;
+		}else{
+			py+=400;
+		}
+	}
+	object.position.x = Math.random() * 3400 - 1700;
+	object.position.y = py;					
+	object.position.z = Math.random() * 3400 - 1700;
+	object.lookAt( vector );
+	targets.chaos.push( object );
+}
+	// 球
+	var vector = new THREE.Vector3();
+	for ( var i = 0, l = objects.length; i < l; i ++ ) {
+		var phi = Math.acos( -1 + ( 2 * i ) / l );
+		var theta = Math.sqrt( l * Math.PI ) * phi;
+		var object = new THREE.Object3D();
+		object.position.x = 750 * Math.cos( theta ) * Math.sin( phi );
+		object.position.y = 750 * Math.sin( theta ) * Math.sin( phi );
+		object.position.z = 750 * Math.cos( phi );
+		vector.copy( object.position ).multiplyScalar( 2 );
+		object.lookAt( vector );
+		targets.sphere.push( object );
+	}				
+	//渲染
+	renderer = new THREE.CSS3DRenderer();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.domElement.style.position = 'absolute';
+	document.getElementById( 'container' ).appendChild( renderer.domElement );
+	//控制器
+	controls = new THREE.TrackballControls( camera, renderer.domElement );
+	controls.rotateSpeed = 0.5;
+	controls.minDistance = 500;
+	controls.maxDistance = 6000;
+	controls.addEventListener( 'change', render );
+	// 初始化
+	transform( targets.table, 1000 );
+	window.addEventListener( 'resize', onWindowResize, false );	
+	cpx = camera.position.x;
+	cpy = camera.position.y;
+	cpz = camera.position.z;
+
+	crx = camera.rotation.x;
+	cry = camera.rotation.y;
+	crz = camera.rotation.z;
+}
+// 切换状态时动画
+function transform( targets, duration ,type) {
+	var scale = 1;
+	if(type==undefined){
+		type=0;
+	}
+	TWEEN.removeAll();
+	for ( var i = 0; i < objects.length; i ++ ) {
+		var object = objects[ i ];
+		var target = targets[ i ];
+		new TWEEN.Tween( object.position )
+			.to( { x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration )
+			.easing( TWEEN.Easing.Exponential.InOut )
+			.start();
+		new TWEEN.Tween( object.rotation )
+			.to( { x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration )
+			.easing( TWEEN.Easing.Exponential.InOut )
+			.start();																	
+	}
+	new TWEEN.Tween( this )
+		.to( {}, duration * 2 )
+		.onUpdate( render )
+		.start();
+}
+// 屏幕大小适配
+function onWindowResize() {
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	render();
+}
+function animate() {
+	requestAnimationFrame( animate );
+	TWEEN.update();
+	// 旋转
+	if(moving){
+		movings();
+	}
+	controls.update();
+	// 星空位置与相机位置相对
+	cpx = camera.position.x;
+	cpy = camera.position.y;
+	cpz = camera.position.z;
+
+	crx = camera.rotation.x;
+	cry = camera.rotation.y;
+	crz = camera.rotation.z;
+
+	if(starBG.position.x + cpx*5/2>1 || ( starBG.position.x + cpx*5/2<-1 )){
+		starBG.position.x = -cpx*5/2;
+		starBG.position.z = -cpz*5/2;	
+		starBG.position.y = -cpy*5/2;	
+		starBG.rotation.x = crx;
+		starBG.rotation.z = crz;	
+		starBG.rotation.y = cry;
+	}
+}
+function render() {
+	renderer.render( scene, camera );
+}
+var numsss =0,srcss='',txtsss='';
+function movings(){
+	// 相机旋转
+	ang += Math.PI/50;
+	camera.position.x = Math.cos(ang)*2000;
+	camera.position.z = Math.sin(ang)*2000;	
+	camera.position.y = 0;
+	// 相机方向重置
+	camera.up.x = 0;
+	camera.up.y = 1;
+	camera.up.z = 0;
+	// 图片方向固定
+	objectsss.rotation.y =-ang+Math.PI/2;
+	//中间图片切换
+	numsss = Math.floor(Math.random()*tableLens);
+	if(numsss==tableLens){
+		numsss = tableLens-1;
+	}
+	srcss = table[numsss*2];
+	txtsss =  table[numsss*2+1];
+	changeImg.src = srcss;
+	detailss.innerHTML = txtsss;
+}
+// 停止时，图片放大动画
+function objDeal(obj,nums){
+	var option = {
+		x: obj.scale.x,  
+		y: obj.scale.y, 
+		z: obj.scale.z,                 
+	};
+	var tween = new TWEEN.Tween(option).to({
+		x:nums,
+		y:nums,
+		z:nums,
+	},300).delay(100).onUpdate(function() {
+		obj.scale.x = this.x;
+		obj.scale.y = this.y;
+		obj.scale.z = this.z;
+		isMoving = true;
+	}).onComplete(function(){
+		isMoving = false;								 
+	}).start();
+}
+			//点击事件及部分判断			
+			var vm = new Vue({
+				el:'#vueBoxs',
+				data:{
+					listShow:false,
+					spic:{
+						img:'',
+						name:''
+					},
+					price1:[],//一等奖        // {name:'白富友3',img:'./img/pic.jpg'}
+					price2:[],//二等奖
+					price3:[],//三等奖
+					lens:[3,4,5],   //奖励名额
+					priceNow:'三等奖'					
+				},
+				methods:{
+					keyDowns:function(){
+						this.closes();						
+					},
+					//判断奖品登记
+					ckPrice:function(){
+						var res = '三等奖';
+						var len1 = this.price1.length;
+						var len2 = this.price2.length;
+						var len3 = this.price3.length;
+						var lens = this.lens;
+						if(lens[2]<=len3){
+							if(lens[1]<=len2){
+								if(lens[0]<=len1){
+									if(this.spic.img!=''){
+										res = '特等奖';
+									}else{
+										res = '特等奖';
+									}
+								}else{
+									res = '一等奖';
+								}
+							}else{
+								res = '二等奖';
+							}
+						}
+						this.priceNow = res;
+					},
+					//开始
+					start:function(){
+						if(vm.spic.img!=''){
+							alert("抽完咯~~~完咯~~~咯~~~,在中奖名单中清空，再来一次？");
+							return;
+						}
+						moving = true;							
+						objectsss.position.y = 0;
+						transform( targets.sphere, 1000 );
+						objDeal(objectsss,1);
+						music.play();
+						this.ckPrice();						
+					},
+					//结束
+					closes:function(){
+						music.pause();
+						if(!moving){
+							return;
+						}	
+						music2.play();
+						moving = false;
+						this.choosePerson();
+						transform( targets.chaos, 250 ,1);
+						objDeal(objectsss,1.8);		
+					},
+					//回到照片墙的状态
+					resets:function(){
+						moving = false;
+						camera.position.z = 2000;
+						camera.position.x =0;
+						camera.position.y = 0;
+						camera.up.x = 0;//相机以哪个方向为上方
+						camera.up.y = 1;
+						camera.up.z = 0;
+	
+						//图片重置方向
+						objectsss.rotation.y = 0;
+						objectsss.position.y = 20000;
+						objectsss.scale.set(1,1,1);
+						// 星空背景图重置
+						transform( targets.table, 400 );
+						music.pause();
+						this.ckPrice();
+					},
+					// 判断是否已经得过奖
+					ckIsIn:function(img){
+						var res = true;
+						var cps = '';
+						this.price3.map(function(v,i){
+							if(v.img==img){
+								res = false;
+							}
+						});
+						this.price2.map(function(v,i){
+							if(v.img==img){
+								res = false;
+							}
+						});
+						this.price1.map(function(v,i){
+							if(v.img==img){
+								res = false;
+							}
+						});
+						if(this.spic.img == img){
+							res = false;
+						}
+						return res;
+					},
+					// 储存得奖名单
+					choosePerson:function(){
+						var img = document.getElementById('changeImg').src;
+						var txt = document.getElementById("detailss").innerHTML;
+						
+						var img2 = document.getElementById('changeImg');
+						var txt2 = document.getElementById("detailss");
+
+						var isFalse = this.ckIsIn(img);						
+						if(!isFalse){
+							//重复了···再随机一次
+							var nums = Math.floor(Math.random()*tableLens);
+							if(nums==tableLens){
+								nums =tableLens-1;
+							}
+							var src = table[nums*2];
+							var txts =  table[nums*2+1];
+
+							img2.src = src;
+							txt2.innerHTML = txts;
+							this.choosePerson();
+							return;
+						}	
+						var obj = {
+							img:img,
+							name:txt
+						};					
+						var len3 =this.price3.length;
+						var len2 =this.price2.length;
+						var len1 =this.price1.length;
+						if(len3<this.lens[2]){
+							this.price3.push(obj);
+						}else{
+							if(len2<this.lens[1]){
+								this.price2.push(obj);
+							}else{
+								if(len1<this.lens[0]){
+									this.price1.push(obj);
+								}else{									
+									if(this.spic.img==''){
+										this.spic = obj;
+									}else{
+										alert("抽完咯，完咯~~咯~~~");
+									}
+								}
+							}
+						}
+						var json = JSON.stringify([this.price1,this.price2,this.price3,this.spic]);
+						localStorage.setItem('pricesListm',json);						
+					},
+					// 清空获奖数据
+					clearLists:function(){
+						this.price1 = [];
+						this.price2 = [];
+						this.price3 = [];	
+						this.spic = {
+							img:'',
+							name:''
+						};
+						localStorage.clear('pricesListm');
+					}
+					
+				},
+				created:function(){
+					var json =localStorage.getItem('pricesListm');
+					if(json){
+						var attrs = JSON.parse(json);
+						this.price1 = attrs[0];
+						this.price2 = attrs[1];
+						this.price3 = attrs[2];	
+						this.spic = attrs[3];
+					}	
+					init();
+					getStar();
+					animate();
+					
+					this.ckPrice();
+				}
+			})
+		</script>
+	
